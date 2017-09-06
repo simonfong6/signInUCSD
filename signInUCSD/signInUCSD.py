@@ -76,12 +76,39 @@ def register():
 		collection = db.users
 		collection.insert_one(newUser)
 		
+		
 		flash('You have been registered.')
     
 	return render_template('register.html', error=error)
+
+@app.route('/signin', methods=['GET', 'POST'])
+def signin():
+	"""Checks whether a user is in the database."""
+	error = None
+	if request.method == 'POST':
+		ucsdId = request.form["ucsdId"]
+		print(ucsdId)
+		
+		ucsdIdNum = ucsdId[2:11]
+		print(ucsdIdNum)
+		
+		ucsdIdInfo = ucsdId.replace(ucsdIdNum, "")
+		print(ucsdIdInfo)
+		
+		ucsdIdInfoHash = bcrypt.hashpw(ucsdIdInfo.encode('utf8'), app.config['UCSDIDINFOSALT'])
+		
+		db = get_db()
+		collection = db.users
+		print(collection.find_one({"ucsdIdInfo" : ucsdIdInfoHash}))
+		
+		flash('Access granted!!')
+		
+		
+	
+	return render_template('signin.html', error=error)
 	
 	
         
-if __name__ == "__main__":
-	app.run()
+if(__name__ == "__main__"):
+	app.run(host='0.0.0.0', port=5000)
 
