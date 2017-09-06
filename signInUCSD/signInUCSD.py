@@ -51,6 +51,7 @@ def register():
 		
 		ucsdId = request.form["ucsdId"]
 		ucsdIdInfo, ucsdIdNum = toNumAndInfo(request.form["ucsdId"])
+		ucsdIdInfo += ucsdIdNum[1:4]
 		ucsdIdInfoHash = hashInfo(ucsdIdInfo)
 		ucsdIdNumHash = hashNum(ucsdIdNum)
 		
@@ -94,6 +95,7 @@ def signin():
 		usersCol= db.users
 		
 		ucsdIdInfo, ucsdIdNum = toNumAndInfo(request.form["ucsdId"])
+		ucsdIdInfo += ucsdIdNum[1:4]
 		ucsdIdInfoHash = hashInfo(ucsdIdInfo)
 
 		
