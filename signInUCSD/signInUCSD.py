@@ -46,17 +46,22 @@ def register():
 	"""Registers a user to the database."""
 	error = None
 	if request.method == 'POST':
+		db = get_db()
+		userCol = db.users
+		
 		ucsdId = request.form["ucsdId"]
-		print(ucsdId)
+		ucsdIdInfo, ucsdIdNum = toNumAndInfo(request.form["ucsdId"])
+		ucsdIdInfoHash = hashInfo(ucsdIdInfo)
+		ucsdIdNumHash = hashNum(ucsdIdNum)
 		
-		ucsdIdNum = ucsdId[2:11]
-		print(ucsdIdNum)
-		
-		ucsdIdInfo = ucsdId.replace(ucsdIdNum, "")
-		print(ucsdIdInfo)
-		
-		ucsdIdInfoHash = bcrypt.hashpw(ucsdIdInfo.encode('utf8'), app.config['UCSDIDINFOSALT'])
-		ucsdIdNumHash = bcrypt.hashpw(ucsdIdNum.encode('utf8'), bcrypt.gensalt())
+		userFromDb = userCol.find_one({"ucsdIdInfo" : ucsdIdInfoHash})
+		if(userFromDb):
+			if(checkNum(ucsdIdNum, userFromDb["ucsdIdNum"])):
+				flash("You already registed {}! Please continue to sign-in using your UCSD ID card.".format(userFromDb["firstName"]))
+				return redirect(url_for('signin'))
+			else:
+				flash("Your UCSD ID card information matches another user. Please contact the administrator for assistance.")
+				return render_template('register.html', error=error)
 		
 		access = None
 		if(request.form["access"] == "true"):
@@ -72,9 +77,8 @@ def register():
 					"ucsdIdNum" : ucsdIdNumHash,
 					"access" : access
 		}
-		db = get_db()
-		collection = db.users
-		collection.insert_one(newUser)
+		
+		userCol.insert_one(newUser)
 		
 		
 		flash('You have been registered.')
@@ -86,26 +90,54 @@ def signin():
 	"""Checks whether a user is in the database."""
 	error = None
 	if request.method == 'POST':
-		ucsdId = request.form["ucsdId"]
-		print(ucsdId)
-		
-		ucsdIdNum = ucsdId[2:11]
-		print(ucsdIdNum)
-		
-		ucsdIdInfo = ucsdId.replace(ucsdIdNum, "")
-		print(ucsdIdInfo)
-		
-		ucsdIdInfoHash = bcrypt.hashpw(ucsdIdInfo.encode('utf8'), app.config['UCSDIDINFOSALT'])
-		
 		db = get_db()
-		collection = db.users
-		print(collection.find_one({"ucsdIdInfo" : ucsdIdInfoHash}))
+		usersCol= db.users
 		
-		flash('Access granted!!')
+		ucsdIdInfo, ucsdIdNum = toNumAndInfo(request.form["ucsdId"])
+		ucsdIdInfoHash = hashInfo(ucsdIdInfo)
+
+		
+		userFromDb = usersCol.find_one({"ucsdIdInfo" : ucsdIdInfoHash})
+		
+		if(userFromDb):
+			if(checkNum(ucsdIdNum, userFromDb["ucsdIdNum"])):
+				if(userFromDb["access"]):
+					usersCol.update_one({"ucsdIdInfo" : ucsdIdInfoHash}, {'$inc': {'projectSpace': 1}})
+					flash('Access granted!!')
+				else:
+					flash('Your access has been restricted!')
+			else:
+				flash('UCSD PID does not match our records. Contact the administrator for help.')
+		else:
+			flash('You are not registerd!')
 		
 		
-	
+		
 	return render_template('signin.html', error=error)
+	
+@app.route('/users')
+def showUsers():
+	db = get_db()
+	usersCol= db.users
+	
+	entries = usersCol.find({})
+	return render_template('users.html', entries=entries)
+	
+def toNumAndInfo(ucsdId):
+	ucsdIdNum = ucsdId[2:11]
+	ucsdIdInfo = ucsdId.replace(ucsdIdNum, "")
+	
+	return (ucsdIdInfo,ucsdIdNum)
+		
+def hashInfo(info):
+	return bcrypt.hashpw(info.encode('utf8'), app.config['UCSDIDINFOSALT'])
+	
+def hashNum(num):
+	return bcrypt.hashpw(num.encode('utf8'), bcrypt.gensalt())
+	
+def checkNum(num, hashedNum):
+	return bcrypt.checkpw(num.encode('utf8'), hashedNum.encode('utf8'))
+	
 	
 	
         
