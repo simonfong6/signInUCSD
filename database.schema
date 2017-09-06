@@ -1,0 +1,8 @@
+user = {id,
+		firstName,
+		lastName,
+		ucsdEmail,
+		ucsdIdInfo,
+		ucsdIdNum,
+		access
+		}

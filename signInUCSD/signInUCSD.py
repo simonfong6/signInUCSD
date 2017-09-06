@@ -3,6 +3,7 @@ signInUCSD.py
 """
 # all the imports
 import os
+import bcrypt
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
 from pymongo import MongoClient
 
@@ -17,36 +18,70 @@ app.config.update(dict(
     DATABASE=dbKey.dbKey,
     SECRET_KEY='development key',
     USERNAME=dbKey.username,
-    PASSWORD=dbkey.password
+    PASSWORD=dbKey.password,
+    UCSDIDINFOSALT=dbKey.ucsdIdInfoSalt
 ))
 
 def connect_db():
 	"""Connects to the signinucsd database on mlab servers."""
-	client = MongoClient(app.config['DATABASE'])
-	return client
+	db = MongoClient(app.config['DATABASE'])
+	return db
 	
 def get_db():
     """Opens a new database connection if there is none yet for the
     current application context.
     """
-    if not hasattr(g, 'mongodb'):
-        g.mongodb = connect_db()
-    return g.mongodb
+    if not hasattr(g, 'dbConnection'):
+        g.dbConnection = connect_db()
+    return g.dbConnection.signinucsd
 
 @app.teardown_appcontext
 def close_db(error):
     """Closes the database again at the end of the request."""
-    if hasattr(g, 'mongodb'):
-        g.mongodb.close()
+    if hasattr(g, 'dbConnection'):
+        g.dbConnection.close()
         
-def init_db():
-    db = get_db()
-    with app.open_resource('schema.sql', mode='r') as f:
-        db.cursor().executescript(f.read())
-    db.commit()
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+	"""Registers a user to the database."""
+	error = None
+	if request.method == 'POST':
+		ucsdId = request.form["ucsdId"]
+		print(ucsdId)
+		
+		ucsdIdNum = ucsdId[2:11]
+		print(ucsdIdNum)
+		
+		ucsdIdInfo = ucsdId.replace(ucsdIdNum, "")
+		print(ucsdIdInfo)
+		
+		ucsdIdInfoHash = bcrypt.hashpw(ucsdIdInfo.encode('utf8'), app.config['UCSDIDINFOSALT'])
+		ucsdIdNumHash = bcrypt.hashpw(ucsdIdNum.encode('utf8'), bcrypt.gensalt())
+		
+		access = None
+		if(request.form["access"] == "true"):
+			access = True
+		else:
+			access = False
+		
+		newUser = {
+					"firstName" : request.form["firstName"],
+					"lastName" : request.form["lastName"],
+					"ucsdEmail" : request.form["ucsdEmail"],
+					"ucsdIdInfo" : ucsdIdInfoHash,
+					"ucsdIdNum" : ucsdIdNumHash,
+					"access" : access
+		}
+		db = get_db()
+		collection = db.users
+		collection.insert_one(newUser)
+		
+		flash('You have been registered.')
     
-@app.cli.command('initdb')
-def initdb_command():
-    """Initializes the database."""
-    init_db()
-    print('Initialized the database.')
+	return render_template('register.html', error=error)
+	
+	
+        
+if __name__ == "__main__":
+	app.run()
+
