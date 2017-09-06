@@ -109,7 +109,7 @@ def signin():
 			else:
 				flash('UCSD PID does not match our records. Contact the administrator for help.')
 		else:
-			flash('You are not registerd!')
+			flash('You are not registered!')
 		
 		
 		
