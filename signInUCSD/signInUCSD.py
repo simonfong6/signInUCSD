@@ -76,7 +76,8 @@ def register():
 					"ucsdEmail" : request.form["ucsdEmail"],
 					"ucsdIdInfo" : ucsdIdInfoHash,
 					"ucsdIdNum" : ucsdIdNumHash,
-					"access" : access
+					"access" : access,
+					"events" : []
 		}
 		
 		userCol.insert_one(newUser)
@@ -124,6 +125,7 @@ def show_users():
 	usersCol= db.users
 	
 	entries = usersCol.find({})
+	print(type(entries))
 	return render_template('show_users.html', entries=entries)
 	
 def toNumAndInfo(ucsdId):
@@ -176,14 +178,71 @@ def delete_user():
 	else:
 		flash("Your delete attempt has failed because the user in not in the system.")
 	return redirect(url_for('show_users'))
-"""	
-@app.route('/events/<eventName>', defaults={'eventName':'projectSpace1718'})
-def eventSignIn(eventName):
-	event = {
-				"url": eventName,
-				"title": "Project Space
-	}
-"""	
+
+@app.route('/create/event', methods=['GET','POST'])
+def create_event():
+	db = get_db()
+	eventsCol = db.events
+	
+	if request.method == 'POST':
+		
+		event = {
+					"title": request.form["title"],
+					"officer": request.form["officer"],
+					"url": request.form["url"],
+					"participants": [],
+					"participantCount": 0
+		}
+		
+		eventsCol.insert_one(event)
+	
+	events = eventsCol.find({})
+	return render_template('create_event.html', events=events)
+
+@app.route('/events/<eventUrl>', methods=['GET','POST'])
+def eventSignIn(eventUrl):
+	db = get_db()
+	eventsCol = db.events
+	
+	event = eventsCol.find_one({"url":eventUrl})
+	
+	if request.method == 'POST':
+		db = get_db()
+		usersCol= db.users
+		
+		ucsdIdInfo, ucsdIdNum = toNumAndInfo(request.form["ucsdId"])
+		ucsdIdInfo += ucsdIdNum[1:4]
+		ucsdIdInfoHash = hashInfo(ucsdIdInfo)
+
+		
+		userFromDb = usersCol.find_one({"ucsdIdInfo" : ucsdIdInfoHash})
+		
+		if(userFromDb):
+			if(checkNum(ucsdIdNum, userFromDb["ucsdIdNum"])):
+				if(userFromDb["access"]):
+					if(not usersCol.find_one({"ucsdIdInfo" : ucsdIdInfoHash, "events.url": event["url"] })):
+						usersCol.update_one({"ucsdIdInfo" : ucsdIdInfoHash}, {'$push': {"events":{"title": event["title"], "count": 1, "url":event["url"]}}})
+					else:
+						usersCol.update_one({"ucsdIdInfo" : ucsdIdInfoHash, "events.url": event["url"] },
+					 	{'$inc': {"events.$.count": 1}})
+					eventsCol.update_one({"url":eventUrl}, 
+										{'$inc':{"participantCount": 1},})
+					flash('Access granted!!')
+				else:
+					flash('Your access has been restricted!')
+			else:
+				flash('UCSD PID does not match our records. Contact the administrator for help.')
+		else:
+			flash('You are not registered!')
+		return redirect(url_for('eventSignIn', eventUrl=event["url"]))
+	
+	
+	if(event):
+		return render_template('event.html', event=event)
+	else:
+		flash("Event does not exist, you can create one here.")
+		return redirect(url_for('create_event'))
+
         
 if(__name__ == "__main__"):
 	app.run(host='0.0.0.0', port=5000)

@@ -32,7 +32,13 @@
     		<li>Last Name: {{ entry.lastName }}
     		<li>UCSD Email: {{ entry.ucsdEmail }}
     		<li>Access: {{ entry.access }}
-    		<li>Project Space: {{ entry.projectSpace }}
+    		<li><h3>Events</h3>
+    			<ul class=entries>
+    			<li>{{entry.events.projectSpace1718}}
+    			{% for event in entry.events %}
+    			<li>{{event.title}} : {{event.count}}
+    			{% endfor %}
+    			</ul>
     	</ul>
   {% else %}
     <li><em>Unbelievable.  No entries here so far</em>

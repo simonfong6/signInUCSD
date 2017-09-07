@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block body %}
+
+  {% if session.logged_in %}
+  	<h2>Event Creator</h2>
+    <form action="{{ url_for('create_event') }}" method=post class=add-entry>
+      <dl>
+        <dt>Title:
+        <dd><input type=text size=30 name=title>
+        <dt>IEEE Officer:
+        <dd><input type=text name=officer>
+        <dt>URL:
+        <dd><input type=text name=url>
+        <dd><input type=submit value=Create>
+      </dl>
+    </form>
+  {% endif %}
+  <h2>Events</h2>
+  <ul class=entries>
+  {% for event in events %}
+    <li><h2>{{ event.title }}</h2>
+    	<ul class=entry>
+    		<li>Officer: {{ event.officer }}
+    		<li>URL: {{ event.url }}
+    		<li>Participant Count: {{ event.participantCount }}
+    		
+    		
+    	</ul>
+  {% else %}
+    <li><em>Unbelievable.  No events here so far</em>
+  {% endfor %}
+  </ul>
+{% endblock %}
