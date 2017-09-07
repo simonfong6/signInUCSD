@@ -86,6 +86,7 @@ def register():
     
 	return render_template('register.html', error=error)
 
+@app.route('/')
 @app.route('/signin', methods=['GET', 'POST'])
 def signin():
 	"""Checks whether a user is in the database."""
@@ -118,12 +119,12 @@ def signin():
 	return render_template('signin.html', error=error)
 	
 @app.route('/users')
-def showUsers():
+def show_users():
 	db = get_db()
 	usersCol= db.users
 	
 	entries = usersCol.find({})
-	return render_template('users.html', entries=entries)
+	return render_template('show_users.html', entries=entries)
 	
 def toNumAndInfo(ucsdId):
 	ucsdIdNum = ucsdId[2:11]
@@ -140,8 +141,49 @@ def hashNum(num):
 def checkNum(num, hashedNum):
 	return bcrypt.checkpw(num.encode('utf8'), hashedNum.encode('utf8'))
 	
+@app.route('/users/update', methods=['POST'])
+def update_user():
+	db = get_db()
+	usersCol= db.users
 	
+	ucsdEmail = request.form["ucsdEmail"]
 	
+	userFromDb = usersCol.find_one({"ucsdEmail" : ucsdEmail})
+	if(userFromDb):
+		access = None
+		if(request.form["access"] == "true"):
+			access = True
+		else:
+			access = False
+
+		usersCol.update_one({"ucsdEmail" : ucsdEmail}, {"$set":{"access": access}})
+		flash("You have updated {} {}'s access level to {}.".format(userFromDb["firstName"], userFromDb["lastName"],access))
+	else:
+		flash("Your update has failed because the user in not in the system.")
+	
+	return redirect(url_for('show_users'))
+
+@app.route('/users/delete', methods=['POST'])
+def delete_user():
+	db = get_db()
+	usersCol= db.users
+	
+	ucsdEmail = request.form["ucsdEmail"]
+	userFromDb = usersCol.find_one({"ucsdEmail" : ucsdEmail})
+	if(userFromDb):
+		usersCol.delete_one({"ucsdEmail" : ucsdEmail})
+		flash("You have deleted {} {}'s account.".format(userFromDb["firstName"], userFromDb["lastName"]))
+	else:
+		flash("Your delete attempt has failed because the user in not in the system.")
+	return redirect(url_for('show_users'))
+"""	
+@app.route('/events/<eventName>', defaults={'eventName':'projectSpace1718'})
+def eventSignIn(eventName):
+	event = {
+				"url": eventName,
+				"title": "Project Space
+	}
+"""	
         
 if(__name__ == "__main__"):
 	app.run(host='0.0.0.0', port=5000)
