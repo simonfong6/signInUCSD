@@ -41,6 +41,68 @@ def close_db(error):
     if hasattr(g, 'dbConnection'):
         g.dbConnection.close()
         
+@app.route('/admin/register', methods=['GET', 'POST'])
+def register_admin():
+	if session.get('logged_in'):
+		return redirect(url_for('signin'))
+
+	error = None
+	if request.method == 'POST':
+		db = get_db()
+		adminsCol = db.admins
+    	
+		adminFromDb = adminsCol.find_one({"ucsdEmail":request.form["ucsdEmail"]})
+
+		if(not adminFromDb):
+			password = request.form['password']
+			pwdhash = hashNum(password)
+			newAdmin = {
+            			"ucsdEmail": request.form["ucsdEmail"],
+            			"password": pwdhash,
+            			"firstName": request.form["firstName"],
+            			"lastName": request.form["lastName"]
+            }
+			adminsCol.insert_one(newAdmin)
+			flash('Please login using your credentials')
+			return redirect(url_for('login'))
+		else:
+			error = "That email is already registered."
+    
+	return render_template('register_admin.html', error=error)
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def login():
+    if session.get('logged_in'):
+        return redirect(url_for('signin'))
+    
+    error = None
+    if request.method == 'POST':
+        db = get_db()
+    	adminsCol = db.admins
+        
+        adminFromDb = adminsCol.find_one({"ucsdEmail":request.form["ucsdEmail"]})
+        
+        if(not adminFromDb):
+            error = 'Invalid email'
+        else:
+            password = request.form['password']
+            matches = checkNum(password, adminFromDb["password"])
+        	
+            if matches:
+                session['logged_in'] = True
+                flash('You were logged in')
+                return redirect(url_for('signin'))
+            else:
+                error = 'Invalid password'
+    
+    return render_template('login.html', error=error)
+
+@app.route('/admin/logout')
+def logout():
+    session.pop('logged_in', None)
+    flash('You were logged out')
+    return redirect(url_for('signin'))
+        
 @app.route('/register', methods=['GET', 'POST'])
 def register():
 	"""Registers a user to the database."""
@@ -125,7 +187,6 @@ def show_users():
 	usersCol= db.users
 	
 	entries = usersCol.find({})
-	print(type(entries))
 	return render_template('show_users.html', entries=entries)
 	
 def toNumAndInfo(ucsdId):
@@ -145,6 +206,8 @@ def checkNum(num, hashedNum):
 	
 @app.route('/users/update', methods=['POST'])
 def update_user():
+	if not session.get('logged_in'):
+		abort(401)
 	db = get_db()
 	usersCol= db.users
 	
@@ -167,6 +230,8 @@ def update_user():
 
 @app.route('/users/delete', methods=['POST'])
 def delete_user():
+	if not session.get('logged_in'):
+		abort(401)
 	db = get_db()
 	usersCol= db.users
 	
@@ -181,10 +246,15 @@ def delete_user():
 
 @app.route('/create/event', methods=['GET','POST'])
 def create_event():
+	if not session.get('logged_in'):
+		flash("You must login first.")
+		return redirect(url_for('login'))
 	db = get_db()
 	eventsCol = db.events
 	
 	if request.method == 'POST':
+		if not session.get('logged_in'):
+			abort(401)
 		
 		event = {
 					"title": request.form["title"],

@@ -21,7 +21,7 @@
     <li><h2>{{ event.title }}</h2>
     	<ul class=entry>
     		<li>Officer: {{ event.officer }}
-    		<li>URL: {{ event.url }}
+    		<li>URL: <a href="{{request.url_root}}events/{{ event.url }}">{{ event.url }}</a>
     		<li>Participant Count: {{ event.participantCount }}
     		
     		
