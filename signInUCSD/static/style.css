@@ -64,3 +64,7 @@ input[type=text], input[type=password], textarea  {
 input[type=text]:focus, input[type=password]:focus, textarea:focus {
     border-bottom: 3px solid #555;
 }
+
+input[type='radio'] {
+    transform: scale(1.4);
+}
