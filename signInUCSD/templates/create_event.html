@@ -5,14 +5,14 @@
   	<h2>Event Creator</h2>
     <form action="{{ url_for('create_event') }}" method=post class=add-entry>
       <dl>
-        <dt>Title:
-        <dd><input type=text size=30 name=title>
-        <dt>Officer:
-        <dd><input type=text name=officer>
-        <dt>About:
+        <dt>Title<span class=required>*</span>
+        <dd><input type=text size=30 name=title required>
+        <dt>Officer<span class=required>*</span>
+        <dd><input type=text name=officer required>
+        <dt>About<span class=required>*</span>
         <dd><textarea name=about rows=10 cols=60></textarea>
-        <dt>URL:
-        <dd><input type=text name=url>
+        <dt>URL<span class=required>*</span>
+        <dd><input type=text name=url required>
         <br><br>
         <dd><input class=button type=submit value=Create>
       </dl>
@@ -20,10 +20,10 @@
     <h2>Event Deleter</h2>
     <form action="{{ url_for('delete_event') }}" method=post class=add-entry>
       <dl>
-        <dt>Title:
-        <dd><input type=text size=30 name=title>
-        <dt>URL:
-        <dd><input type=text name=url>
+        <dt>Title<span class=required>*</span>
+        <dd><input type=text size=30 name=title required>
+        <dt>URL<span class=required>*</span>
+        <dd><input type=text name=url required>
         <br><br>
         <dd><input class=button type=submit value=Delete>
       </dl>

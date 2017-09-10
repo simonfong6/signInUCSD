@@ -186,8 +186,8 @@ def login():
     loginPage = Page("Login", "")
     
     form = Form("Login", "login", "Login")            
-    form.addTextInput("UCSD Email", "ucsdEmail")
-    form.addInput("Password", "password", "password")
+    form.addTextInput("UCSD Email", "ucsdEmail", placeholder="Your UCSD email...")
+    form.addInput("Password", "password", "password", placeholder="Your password...")
     
     loginPage.addForm(form)
     
@@ -382,5 +382,5 @@ def eventSignIn(eventUrl):
 
         
 if(__name__ == "__main__"):
-	app.run(host='0.0.0.0', port=5000)
+	app.run(host='0.0.0.0', port=5000, threaded=True)
 

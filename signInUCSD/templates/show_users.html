@@ -5,10 +5,10 @@
   	<h2>Change User Access</h2>
     <form action="{{ url_for('update_user') }}" method=post class=add-entry>
       <dl>
-        <dt>UCSD Email:
-        <dd><input type=text size=30 name=ucsdEmail>
-        <dt>Access:
-        <dd><input type=text name=access>
+        <dt>UCSD Email<span class=required>*</span>
+        <dd><input type=text size=30 name=ucsdEmail required>
+        <dt>Access<span class=required>*</span>
+        <dd><input type=text name=access required>
         <br><br>
         <dd><input class=button type=submit value=Change>
       </dl>
@@ -16,10 +16,10 @@
     <h2>Delete User</h2>
     <form action="{{ url_for('delete_user') }}" method=post class=add-entry>
       <dl>
-        <dt>UCSD Email:
-        <dd><input type=text size=30 name=ucsdEmail>
-        <dt>Confirm UCSD Email:
-        <dd><input type=text size=30 name=ucsdEmailConfirm>
+        <dt>UCSD Email<span class=required>*</span>
+        <dd><input type=text size=30 name=ucsdEmail required>
+        <dt>Confirm UCSD Email<span class=required>*</span>
+        <dd><input type=text size=30 name=ucsdEmailConfirm required>
         <br><br>
         <dd><input class=button type=submit value=Delete>
       </dl>
