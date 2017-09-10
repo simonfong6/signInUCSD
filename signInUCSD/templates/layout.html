@@ -8,16 +8,15 @@
 <div class=page>
   <h1>Sign-In UCSD</h1>
   <div class=metanav>
-  	<a href="{{ url_for('create_event') }}">Event Creator</a>
-  	<a href="{{ url_for('register_admin') }}">Admin Registration</a>
-  	<a href="{{ url_for('signin') }}">Sign-In</a>
-  	<a href="{{ url_for('show_users') }}">Users</a>
-  	<a href="{{ url_for('register') }}">Register</a>
+  <ul>
+  	<li><a href="{{ url_for('create_event') }}">Events</a></li>
+  	<li><a href="{{ url_for('show_users') }}">Users</a></li>
   {% if not session.logged_in %}
-    <a href="{{ url_for('login') }}">Log In</a>
+    <li class="last"><a href="{{ url_for('login', next=request.endpoint) }}">Log In</a></li>
   {% else %}
-    <a href="{{ url_for('logout') }}">Log Out</a>
+    <li class="last"><a href="{{ url_for('logout', next=request.endpoint) }}">Log Out</a></li>
   {% endif %}
+  </ul>
   </div>
   {% for message in get_flashed_messages() %}
     <div class=flash>{{ message }}</div>

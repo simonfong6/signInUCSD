@@ -3,12 +3,19 @@
 <h2>{{page.title}}</h2>
   {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
   <p>{{page.about|safe}}</p>
+  <br><br>
+  
+  <h3>Forms</h3>
+  <dl>
+  	<dt><a href="/events/{{eventUrl}}/signup">Sign-Up</a>
+  	<dt><a href="/events/{{eventUrl}}/rsvp">RSVP</a>
+  	<dt><a href="/events/{{eventUrl}}/waitlist">Waitlist</a>
+  	<dt><a href="/events/{{eventUrl}}/signin">Sign-In</a>
+  </dl>
    
   {% for form in page.forms %}
 	  {% if form.eventUrl %}
 	  	{% set endpoint = url_for(form.endpoint, eventUrl=form.eventUrl) %}
-	  {% elif redirect_login %}
-	  	{% set endpoint = url_for(form.endpoint, next=redirect_login) %}
 	  {% else %}
 	  	{% set endpoint = url_for(form.endpoint) %}
 	  {% endif %}
@@ -16,11 +23,10 @@
 		<dl>
 		  {% for input in form.inputs %}
 		  	{% if input.type == "text" or input.type == "password" %}
-		  		<dt>{{input.title}}<span class=required>*</span>
-		  		<dd><input type={{input.type}} name={{input.name}} placeholder="{{input.placeholder}}" 
-		  		required {{input.autofocus}}>
+		  		<dt><span class=required>*</span>{{input.title}}
+		  		<dd><input type={{input.type}} name={{input.name}} required {{input.autofocus}}>
 		  	{% elif input.type == "radio" %}
-		  		<dt>{{input.categoryTitle}}<span class=required>*</span>
+		  		<dt><span class=required>*</span>{{input.categoryTitle}}
 		  		{% for radio in input.radios %}
 		  			<dd><input type=radio name={{input.category}} value={{radio.value}} required>{{radio.title}}
 		  		{% endfor %}
@@ -28,12 +34,8 @@
 		  {% endfor %}
 		  <br>
 		  <br>
-		  <dd><input class=button type=submit value={{form.submit}}>
+		  <dd><input type=submit value={{form.submit}}>
 		</dl>
 	  </form>
   {% endfor %}
-  {% if page.title == "Login" %}
-  	If you do not have an account already, please register using the link below.
-  	<a href="{{ url_for('register') }}"><button class=button type="button">Register</button></a>
-  {% endif %}
 {% endblock %}

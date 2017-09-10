@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 
-  {% if session.logged_in %}
+  {% if session.admin %}
   	<h2>Change User Access</h2>
     <form action="{{ url_for('update_user') }}" method=post class=add-entry>
       <dl>
@@ -9,7 +9,8 @@
         <dd><input type=text size=30 name=ucsdEmail>
         <dt>Access:
         <dd><input type=text name=access>
-        <dd><input type=submit value=Change>
+        <br><br>
+        <dd><input class=button type=submit value=Change>
       </dl>
     </form>
     <h2>Delete User</h2>
@@ -19,7 +20,8 @@
         <dd><input type=text size=30 name=ucsdEmail>
         <dt>Confirm UCSD Email:
         <dd><input type=text size=30 name=ucsdEmailConfirm>
-        <dd><input type=submit value=Delete>
+        <br><br>
+        <dd><input class=button type=submit value=Delete>
       </dl>
     </form>
   {% endif %}

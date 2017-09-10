@@ -1,17 +1,31 @@
 {% extends "layout.html" %}
 {% block body %}
 
-  {% if session.logged_in %}
+  {% if session.admin %}
   	<h2>Event Creator</h2>
     <form action="{{ url_for('create_event') }}" method=post class=add-entry>
       <dl>
         <dt>Title:
         <dd><input type=text size=30 name=title>
-        <dt>IEEE Officer:
+        <dt>Officer:
         <dd><input type=text name=officer>
+        <dt>About:
+        <dd><textarea name=about rows=10 cols=60></textarea>
         <dt>URL:
         <dd><input type=text name=url>
-        <dd><input type=submit value=Create>
+        <br><br>
+        <dd><input class=button type=submit value=Create>
+      </dl>
+    </form>
+    <h2>Event Deleter</h2>
+    <form action="{{ url_for('delete_event') }}" method=post class=add-entry>
+      <dl>
+        <dt>Title:
+        <dd><input type=text size=30 name=title>
+        <dt>URL:
+        <dd><input type=text name=url>
+        <br><br>
+        <dd><input class=button type=submit value=Delete>
       </dl>
     </form>
   {% endif %}
@@ -21,7 +35,7 @@
     <li><h2>{{ event.title }}</h2>
     	<ul class=entry>
     		<li>Officer: {{ event.officer }}
-    		<li>URL: <a href="{{request.url_root}}events/{{ event.url }}">{{ event.url }}</a>
+    		<li>URL: <a href="{{request.url_root}}events/{{ event.url }}/dashboard">{{ event.url }}</a>
     		<li>Participant Count: {{ event.participantCount }}
     		
     		

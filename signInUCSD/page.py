@@ -25,19 +25,20 @@ class Form():
 	def setEventUrl(self, eventUrl):
 		self.eventUrl = eventUrl
 		
-	def addInput(self, title, inputType, inputName, autofocus=None):
+	def addInput(self, title, inputType, inputName, autofocus=None, placeholder=None):
 		formInput = {
 						"title": title,
 						"type": inputType,
 						"name": inputName,
-						"autofocus": autofocus
+						"autofocus": autofocus,
+						"placeholder": placeholder
 		}
 		
 		self.inputs.append(formInput)
 		
 	
-	def addTextInput(self, title, inputName):
-		self.addInput(title, "text", inputName)
+	def addTextInput(self, title, inputName, placeholder=None):
+		self.addInput(title, "text", inputName,placeholder=placeholder)
 	
 	def addRadios(self, radioSet):
 		self.inputs.append(radioSet)
