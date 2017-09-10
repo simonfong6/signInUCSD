@@ -25,17 +25,17 @@
   {% endif %}
   <h2>Users</h2>
   <ul class=entries>
-  {% for entry in entries %}
-    <li><h2>{{ entry.firstName }} {{ entry.lastName }}</h2>
+  {% for user in users %}
+    <li><h3>{{ user.firstName }} {{ user.lastName }}</h3>
     	<ul class=entry>
-    		<li>First Name: {{ entry.firstName }}
-    		<li>Last Name: {{ entry.lastName }}
-    		<li>UCSD Email: {{ entry.ucsdEmail }}
-    		<li>Access: {{ entry.access }}
+    		<li>First Name: {{ user.firstName }}
+    		<li>Last Name: {{ user.lastName }}
+    		<li>UCSD Email: {{ user.ucsdEmail }}
+    		<li>Access: {{ user.access }}
     		<li><h3>Events</h3>
     			<ul class=entries>
-    			<li>{{entry.events.projectSpace1718}}
-    			{% for event in entry.events %}
+    			<li>{{user.events.projectSpace1718}}
+    			{% for event in user.events %}
     			<li>{{event.title}} : {{event.count}}
     			{% endfor %}
     			</ul>

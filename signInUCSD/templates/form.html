@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>{{page.title}}</h2>
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  <p>{{page.about|safe}}</p>
+   
+  {% for form in page.forms %}
+	  {% if form.eventUrl %}
+	  	{% set endpoint = url_for(form.endpoint, eventUrl=form.eventUrl) %}
+	  {% else %}
+	  	{% set endpoint = url_for(form.endpoint) %}
+	  {% endif %}
+	  <form action="{{ endpoint }}" method=post>
+		<dl>
+		  {% for input in form.inputs %}
+		  	{% if input.type == "text" or input.type == "password" %}
+		  		<dt><span class=required>*</span>{{input.title}}
+		  		<dd><input type={{input.type}} name={{input.name}} required {{input.autofocus}}>
+		  	{% elif input.type == "radio" %}
+		  		<dt><span class=required>*</span>{{input.categoryTitle}}
+		  		{% for radio in input.radios %}
+		  			<dd><input type=radio name={{input.category}} value={{radio.value}} required>{{radio.title}}
+		  		{% endfor %}
+		  	{% endif %}
+		  {% endfor %}
+		  <br>
+		  <br>
+		  <dd><input type=submit value={{form.submit}}>
+		</dl>
+	  </form>
+  {% endfor %}
+{% endblock %}

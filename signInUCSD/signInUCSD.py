@@ -6,6 +6,7 @@ import os
 import bcrypt
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
 from pymongo import MongoClient
+from page import Page, Form, RadioSet
 
 #Database key
 import dbKey
@@ -41,6 +42,21 @@ def close_db(error):
     if hasattr(g, 'dbConnection'):
         g.dbConnection.close()
         
+def toNumAndInfo(ucsdId):
+	ucsdIdNum = ucsdId[2:11]
+	ucsdIdInfo = ucsdId.replace(ucsdIdNum, "")
+	
+	return (ucsdIdInfo,ucsdIdNum)
+		
+def hashInfo(info):
+	return bcrypt.hashpw(info.encode('utf8'), app.config['UCSDIDINFOSALT'])
+	
+def hashNum(num):
+	return bcrypt.hashpw(num.encode('utf8'), bcrypt.gensalt())
+	
+def checkNum(num, hashedNum):
+	return bcrypt.checkpw(num.encode('utf8'), hashedNum.encode('utf8'))
+        
 @app.route('/admin/register', methods=['GET', 'POST'])
 def register_admin():
 	if session.get('logged_in'):
@@ -67,8 +83,19 @@ def register_admin():
 			return redirect(url_for('login'))
 		else:
 			error = "That email is already registered."
+			
+	registerPage = Page("Admin Registration", "")
+	
+	form = Form("Register Admin", "register_admin", "Register")
+	form.addTextInput("First Name:", "firstName")
+	form.addTextInput("Last Name:", "lastName")
+	form.addTextInput("UCSD Email:", "ucsdEmail")
+	form.addInput("Password:", "password", "password")
+	form.addInput("Confirm Password:", "password", "confirmPassword")
+	
+	registerPage.addForm(form)
     
-	return render_template('register_admin.html', error=error)
+	return render_template('form.html', error=error, page=registerPage)
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def login():
@@ -94,8 +121,17 @@ def login():
                 return redirect(url_for('signin'))
             else:
                 error = 'Invalid password'
+                
+   
+    loginPage = Page("Login", "")
     
-    return render_template('login.html', error=error)
+    form = Form("Login", "login", "Login")            
+    form.addTextInput("UCSD Email:", "ucsdEmail")
+    form.addInput("Password:", "password", "password")
+    
+    loginPage.addForm(form)
+    
+    return render_template('form.html', page=loginPage)
 
 @app.route('/admin/logout')
 def logout():
@@ -106,12 +142,12 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
 	"""Registers a user to the database."""
+	
 	error = None
 	if request.method == 'POST':
 		db = get_db()
 		userCol = db.users
 		
-		ucsdId = request.form["ucsdId"]
 		ucsdIdInfo, ucsdIdNum = toNumAndInfo(request.form["ucsdId"])
 		ucsdIdInfo += ucsdIdNum[1:4]
 		ucsdIdInfoHash = hashInfo(ucsdIdInfo)
@@ -120,34 +156,45 @@ def register():
 		userFromDb = userCol.find_one({"ucsdIdInfo" : ucsdIdInfoHash})
 		if(userFromDb):
 			if(checkNum(ucsdIdNum, userFromDb["ucsdIdNum"])):
-				flash("You already registed {}! Please continue to sign-in using your UCSD ID card.".format(userFromDb["firstName"]))
+				flash("You already registered {}! Please continue to sign-in using your UCSD ID card.".format(userFromDb["firstName"]))
 				return redirect(url_for('signin'))
 			else:
 				flash("Your UCSD ID card information matches another user. Please contact the administrator for assistance.")
-				return render_template('register.html', error=error)
-		
-		access = None
-		if(request.form["access"] == "true"):
-			access = True
 		else:
-			access = False
+			access = None
+			if(request.form["access"] == "true"):
+				access = True
+			else:
+				access = False
 		
-		newUser = {
-					"firstName" : request.form["firstName"],
-					"lastName" : request.form["lastName"],
-					"ucsdEmail" : request.form["ucsdEmail"],
-					"ucsdIdInfo" : ucsdIdInfoHash,
-					"ucsdIdNum" : ucsdIdNumHash,
-					"access" : access,
-					"events" : []
-		}
+			newUser = {
+						"firstName" : request.form["firstName"],
+						"lastName" : request.form["lastName"],
+						"ucsdEmail" : request.form["ucsdEmail"],
+						"ucsdIdInfo" : ucsdIdInfoHash,
+						"ucsdIdNum" : ucsdIdNumHash,
+						"access" : access,
+						"events" : []
+			}
 		
-		userCol.insert_one(newUser)
+			userCol.insert_one(newUser)
 		
 		
-		flash('You have been registered.')
+			flash('You have been registered.')
+	
+	registerPage = Page("Register", "")
+	
+	form = Form("Register", "register", "Register")
+	
+	form.addTextInput("First Name:", "firstName")
+	form.addTextInput("Last Name:", "lastName")
+	form.addTextInput("UCSD Email:", "ucsdEmail")
+	form.addTextInput("Access:", "access")
+	form.addInput("PID:","password" , "ucsdId")
+	
+	registerPage.addForm(form)
     
-	return render_template('register.html', error=error)
+	return render_template('form.html', error=error, page=registerPage)
 
 @app.route('/')
 @app.route('/signin', methods=['GET', 'POST'])
@@ -177,32 +224,21 @@ def signin():
 		else:
 			flash('You are not registered!')
 		
+	signInPage = Page("Sign-In", "<h3>Please sign-in using your UCSD ID card.</h3>")
+	
+	form = Form("Sign-In", "signin", "Submit")
+	form.addInput("PID:","password" , "ucsdId",autofocus="autofocus")
+	signInPage.addForm(form)
 		
-		
-	return render_template('signin.html', error=error)
+	return render_template('form.html', error=error, page=signInPage)
 	
 @app.route('/users')
 def show_users():
 	db = get_db()
 	usersCol= db.users
+	users = usersCol.find({})
+	return render_template('show_users.html', users=users)
 	
-	entries = usersCol.find({})
-	return render_template('show_users.html', entries=entries)
-	
-def toNumAndInfo(ucsdId):
-	ucsdIdNum = ucsdId[2:11]
-	ucsdIdInfo = ucsdId.replace(ucsdIdNum, "")
-	
-	return (ucsdIdInfo,ucsdIdNum)
-		
-def hashInfo(info):
-	return bcrypt.hashpw(info.encode('utf8'), app.config['UCSDIDINFOSALT'])
-	
-def hashNum(num):
-	return bcrypt.hashpw(num.encode('utf8'), bcrypt.gensalt())
-	
-def checkNum(num, hashedNum):
-	return bcrypt.checkpw(num.encode('utf8'), hashedNum.encode('utf8'))
 	
 @app.route('/users/update', methods=['POST'])
 def update_user():
@@ -234,14 +270,14 @@ def delete_user():
 		abort(401)
 	db = get_db()
 	usersCol= db.users
+	userFromDb = usersCol.find_one({"ucsdEmail" : request.form["ucsdEmail"]})
 	
-	ucsdEmail = request.form["ucsdEmail"]
-	userFromDb = usersCol.find_one({"ucsdEmail" : ucsdEmail})
 	if(userFromDb):
 		usersCol.delete_one({"ucsdEmail" : ucsdEmail})
 		flash("You have deleted {} {}'s account.".format(userFromDb["firstName"], userFromDb["lastName"]))
 	else:
 		flash("Your delete attempt has failed because the user in not in the system.")
+	
 	return redirect(url_for('show_users'))
 
 @app.route('/create/event', methods=['GET','POST'])
@@ -249,6 +285,7 @@ def create_event():
 	if not session.get('logged_in'):
 		flash("You must login first.")
 		return redirect(url_for('login'))
+	
 	db = get_db()
 	eventsCol = db.events
 	
@@ -267,6 +304,7 @@ def create_event():
 		eventsCol.insert_one(event)
 	
 	events = eventsCol.find({})
+	
 	return render_template('create_event.html', events=events)
 
 @app.route('/events/<eventUrl>', methods=['GET','POST'])
@@ -308,10 +346,82 @@ def eventSignIn(eventUrl):
 	
 	
 	if(event):
-		return render_template('event.html', event=event)
+		eventPage = Page(event["title"] + " Sign-In", "<h3>Please sign-in using your UCSD ID card.</h3>")
+		form = Form(event["title"] + " Sign-In", "eventSignIn", "Submit")
+		form.setEventUrl(event["url"])
+		form.addInput("PID:","password" , "ucsdId",autofocus="autofocus")
+		eventPage.addForm(form)
+		
+		return render_template('form.html', page=eventPage)
 	else:
 		flash("Event does not exist, you can create one here.")
 		return redirect(url_for('create_event'))
+
+	
+		
+@app.route('/general/register', methods=['GET','POST'])
+def register_general():
+	
+	about = """
+All engineers need some computer skills, and we are not talking about "This is a keyboard, and that is the Ethernet cable"
+
+Come and learn some C Programming along with UNIX, vim, and git! Experience some software development in the real world!
+
+This workshop is proudly brought you by the UC San Diego chapters of IEEE, Eta Kappa Nu, and Tau Beta Pi!
+
+Date & Time: Jan. 22 (Sunday, Week 2) 10am-12:30pm
+Location: T.B.A.
+
+Questions? Please contact us at IEEE.UCSD.Tech@gmail.com"""
+	
+	registerPage = Page("Arduino Workshop", about)
+	
+	form = Form("Arduino Workshop", "register_general", "Register")
+	form.addTextInput("First Name:", "firstName")
+	form.addTextInput("Last Name:", "lastName")
+	form.addTextInput("UCSD Email:", "ucsdEmail")
+	form.addTextInput("IEEE Member Number (Enter '0' if you don't have one.):", "ieeeNumber")
+	
+	majors = RadioSet("Major:", "major")
+	majors.addRadio("Electrical Engineering", "EE")
+	majors.addRadio("Computer Engineering", "CE")
+	majors.addRadio("Computer Science", "CS")
+	majors.addRadio("Mechanical Engineering", "ME")
+	
+	form.addRadios(majors)
+	
+	studentType = RadioSet("Student Type:", "studentType")
+	studentType.addRadio("Non-Transfer (Entered as Freshman)", "nonTransfer")
+	studentType.addRadio("Transfer", "transfer")
+	studentType.addRadio("Graduate", "graduate")
+	
+	form.addRadios(studentType)
+	
+	years = RadioSet("Years:", "years")
+	years.addRadio("1st Year", "1")
+	years.addRadio("2nd Year", "2")
+	years.addRadio("3rd Year", "3")
+	years.addRadio("4th Year", "4")
+	years.addRadio("5th Year", "5")
+	years.addRadio("6th Year", "6")
+	
+	form.addRadios(years)
+	
+	staffMember = RadioSet("Are you currently an IEEE Staff Member?:", "staffMember")
+	staffMember.addRadio("Yes", "yes")
+	staffMember.addRadio("No", "no")
+	
+	form.addRadios(staffMember)
+	
+	registerPage.addForm(form)
+	
+	
+	if(request.method == "POST"):
+		for key in request.form:
+			print(key,request.form[key])
+	
+	
+	return render_template('form.html', page=registerPage)
 
         
 if(__name__ == "__main__"):
