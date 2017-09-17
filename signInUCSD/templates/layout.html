@@ -13,9 +13,9 @@
   	<li><a href="{{ url_for('create_event') }}">Events</a></li>
   	<li><a href="{{ url_for('show_users') }}">Users</a></li>
   {% if not session.logged_in %}
-    <li class="last"><a href="{{ url_for('login', next=request.endpoint) }}">Log In</a></li>
+    <li class="last"><a href="{{ url_for('login', next=request.path) }}">Log In</a></li>
   {% else %}
-    <li class="last"><a href="{{ url_for('logout', next=request.endpoint) }}">Log Out</a></li>
+    <li class="last"><a href="{{ url_for('logout', next=request.path) }}">Log Out</a></li>
   {% endif %}
   </ul>
   </div>

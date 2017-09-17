@@ -53,18 +53,15 @@ a:hover { background-color: #74C2E1; }
     .metanav ul li {float: none; } }
 
 input[type=text], input[type=password], textarea  {
-    width: 100%;
-    padding: 12px 20px;
-    margin: 8px 0;
-    box-sizing: border-box;
-    border: 2px solid #008CBA;
-    border-radius: 4px;
-}
+    			  width: 100%;
+    			  padding: 12px 20px;
+    			  margin: 8px 0;
+    			  box-sizing: border-box;
+    			  border: 2px solid #008CBA;
+    			  border-radius: 4px; }
 
 input[type=text]:focus, input[type=password]:focus, textarea:focus {
-    border-bottom: 3px solid #555;
-}
+    			  border-bottom: 3px solid #555; }
 
 input[type='radio'] {
-    transform: scale(1.4);
-}
+				  transform: scale(1.4); }

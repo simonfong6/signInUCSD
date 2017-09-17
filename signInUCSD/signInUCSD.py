@@ -4,6 +4,7 @@ signInUCSD.py
 # all the imports
 import os
 import bcrypt
+import urllib
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
 from pymongo import MongoClient
 from page import Page, Form, RadioSet
@@ -44,9 +45,8 @@ def close_db(error):
         g.dbConnection.close()
         
 def redirect_dest(fallback):
-    dest = request.args.get('next')
     try:
-        dest_url = url_for(dest)
+        dest_url = urllib.unquote(request.args.get('next')).decode('utf8')
     except:
         return redirect(fallback)
     return redirect(dest_url)
@@ -158,7 +158,7 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if session.get('logged_in'):
-        return redirect(url_for('signin'))
+        return redirect(url_for('create_event'))
     
     error = None
     if request.method == 'POST':
@@ -269,13 +269,15 @@ def create_event():
 					"signups" : [],
 					"rsvps" : [],
 					"waitlist" : [],
-					"participants": [],
+					"signins": [],
+					"volunteers": [],
 					"participantCount": 0
 		}
 		
 		eventsCol.insert_one(event)
 	
 	events = eventsCol.find({})
+	
 	
 	return render_template('create_event.html', events=events)
 	
@@ -316,6 +318,9 @@ def eventSettings(eventUrl):
 		
 @app.route('/events/<eventUrl>/signup')
 def eventSignup(eventUrl):
+	if not session.get('ucsdEmail'):
+		return redirect(url_for('login', next=request.endpoint, eventUrl=eventUrl))
+	
 	db = get_db()
 	eventsCol = db.events
 	
@@ -323,6 +328,7 @@ def eventSignup(eventUrl):
 	
 	if(event):
 		eventPage = Page(event["title"], event["about"])
+		eventPage.eventUrl = eventUrl
 
 		return render_template('event_dashboard.html', page=eventPage, eventUrl=event["url"])
 	else:
