@@ -36,9 +36,9 @@
     		<li>Access: {{ user.access }}
     		<li><h3>Events</h3>
     			<ul class=entries>
-    			<li>{{user.events.projectSpace1718}}
     			{% for event in user.events %}
     			<li>{{event.title}} : {{event.count}}
+    			<li>Status: {{event.status}}
     			{% endfor %}
     			</ul>
     	</ul>

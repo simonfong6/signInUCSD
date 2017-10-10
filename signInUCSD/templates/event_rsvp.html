@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block body %}
+<!-- Requires a Page object -->
+<h2>{{page.title}}</h2>
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  <p>{{page.about|safe}}</p>
+  <div class=dual-buttons>
+	  <form action="{{ url_for('eventRsvp', eventUrl=eventUrl) }}" method=post>
+		<input class=button type=submit name=submit value="Cancel">
+	  </form>
+	  
+	  <form action="{{ url_for('eventRsvp', eventUrl=eventUrl) }}" method=post>
+		<input class=button type=submit name=submit value="RSVP">
+	  </form>
+  <div>
+
+  
+{% endblock %}

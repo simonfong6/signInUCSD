@@ -48,6 +48,10 @@ a:hover { background-color: #74C2E1; }
 				  text-align: center;
 				  padding: 14px 16px;
 				  text-decoration: none; }
+				  
+.dual-buttons form {
+				  display: inline; }
+
 @media screen and (max-width: 600px){
 	.metanav ul li.right, 
     .metanav ul li {float: none; } }

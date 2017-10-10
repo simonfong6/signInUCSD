@@ -316,27 +316,229 @@ def eventSettings(eventUrl):
 		flash("Event does not exist, you can create one here.")
 		return redirect(url_for('create_event'))
 		
-@app.route('/events/<eventUrl>/signup')
+@app.route('/events/<eventUrl>/signup', methods=["GET", "POST"])
 def eventSignup(eventUrl):
+	#Check if logged in
 	if not session.get('ucsdEmail'):
 		return redirect(url_for('login', next=request.endpoint, eventUrl=eventUrl))
 	
 	db = get_db()
 	eventsCol = db.events
-	
 	event = eventsCol.find_one({"url":eventUrl})
 	
-	if(event):
-		eventPage = Page(event["title"], event["about"])
-		eventPage.eventUrl = eventUrl
-
-		return render_template('event_dashboard.html', page=eventPage, eventUrl=event["url"])
-	else:
+	#Check if there is an event
+	if(not event):
 		flash("Event does not exist, you can create one here.")
 		return redirect(url_for('create_event'))
+	
+	#Handles sign up request
+	if(request.method == "POST"):
+		event = {
+					"count": 0,
+					"url": eventUrl,
+					"title": event["title"],
+					"status": "signedUp"
+		}
+		
+		usersCol = db.users
+		usersCol.update_one(
+							{"ucsdEmail": session["ucsdEmail"]},
+							{"$push": {
+										"events": event
+									}
+							}
+							)
+		userFromDb = usersCol.find_one({"ucsdEmail": session["ucsdEmail"]})
+							
+		user = {
+					"firstName": userFromDb["firstName"],
+					"lastName": userFromDb["lastName"],
+					"ucsdEmail": userFromDb["ucsdEmail"],
+					"ieeeNumber": userFromDb["ieeeNumber"],
+					"datetime": datetime.utcnow()
+		}
+		
+		eventsCol.update_one(
+								{"url":eventUrl},
+								{"$push": {
+											"signups": user
+										}
+								}
+							)
+		flash("You have signed up for {}".format(event["title"]))
+		return redirect(url_for('eventSettings', eventUrl=eventUrl))
+	
+	#Create page	
+	signupPage = Page(event["title"], event["about"])
+		
+	form = Form("Sign Up", "eventSignup", "Sign Up")
+	form.setEventUrl(eventUrl)
+	
+	experience = RadioSet("Experience with Project Space", "experience")
+	experience.addRadio("No experience", 1)
+	experience.addRadio("Some experience", 2)
+	experience.addRadio("Very experienced", 3)
+	
+	form.addRadios(experience)
+	
+	signupPage.addForm(form)
+
+	return render_template('form.html', page=signupPage)
+
+@app.route('/events/<eventUrl>/rsvp', methods=['GET','POST'])
+def eventRsvp(eventUrl):
+	#Check if logged in
+	if not session.get('ucsdEmail'):
+		return redirect(url_for('login', next=request.endpoint, eventUrl=eventUrl))
+	
+	db = get_db()
+	eventsCol = db.events
+	event = eventsCol.find_one({"url":eventUrl})
+	
+	if(not event):
+		flash("Event does not exist, you can create one here.")
+		return redirect(url_for('create_event'))
+	
+	if(request.method == "POST" and request.form["submit"] == "Cancel"):
+		flash("You have canceled your acceptance to this event.")
+		statusUpdate(eventUrl, "cancels", "canceled")
+	
+	if(request.method == "POST" and request.form["submit"] == "RSVP"):
+		flash("""You have RSVPed to this event. Return here if you need to cancel your RSVP so that
+		others may take your spot.""")
+		statusUpdate(eventUrl, "rsvps", "rsvped")
+	
+	#Create page
+	rsvpPage = Page(event["title"] + " RSVP", "Please RSVP if you are still going.")
+	return render_template("event_rsvp.html", page=rsvpPage, eventUrl=eventUrl)
+	
+@app.route('/events/<eventUrl>/waitlist', methods=['GET','POST'])
+def eventWaitlist(eventUrl):
+	#Check if logged in
+	if not session.get('ucsdEmail'):
+		return redirect(url_for('login', next=request.endpoint, eventUrl=eventUrl))
+	
+	db = get_db()
+	eventsCol = db.events
+	event = eventsCol.find_one({"url":eventUrl})
+	
+	if(not event):
+		flash("Event does not exist, you can create one here.")
+		return redirect(url_for('create_event'))
+	
+	if(request.method == "POST" and request.form["submit"] == "Cancel"):
+		flash("You have canceled your acceptance to this event.")
+		statusUpdate(eventUrl, "cancels", "canceled")
+	
+	if(request.method == "POST" and request.form["submit"] == "Waitlist"):
+		flash("""You have been added to the waitlist for this event. Keep a look out in your emails to see if you have been accepted.""")
+		statusUpdate(eventUrl, "waitlists", "waitlisted")
+	
+	#Create page
+	waitlistPage = Page(event["title"] + " Waitlist", "Please click waitlsit if you want to be added to our waitlist for this event.")
+	return render_template("event_waitlist.html", page=waitlistPage, eventUrl=eventUrl)
 
 @app.route('/events/<eventUrl>/signin', methods=['GET','POST'])
 def eventSignIn(eventUrl):
+	db = get_db()
+	eventsCol = db.events
+	event = eventsCol.find_one({"url":eventUrl})
+	
+	#Event does not exist yet
+	if(not event):
+		flash("Event does not exist, you can create one here.")
+		return redirect(url_for('create_event'))
+		
+	if request.method == 'POST':
+		ucsdEmail = request.form["ucsdEmail"]
+		
+		usersCol = db.users
+		
+		usersCol.update_one(
+							{
+								"ucsdEmail": ucsdEmail,
+								"events.url": eventUrl
+							},
+							{
+								"$set": {
+											"events.$.status": "signedin"
+										}
+							}
+						)
+							
+		
+		userFromDb = usersCol.find_one({"ucsdEmail": session["ucsdEmail"]})
+						
+		user = {
+					"firstName": userFromDb["firstName"],
+					"lastName": userFromDb["lastName"],
+					"ucsdEmail": userFromDb["ucsdEmail"],
+					"ieeeNumber": userFromDb["ieeeNumber"],
+					"datetime": datetime.utcnow()
+		}
+		
+		eventsCol.update_one(
+								{"url": eventUrl}, 
+								{
+									'$inc': {"participantCount": 1},
+									"$push": {
+										"signins": user
+									}
+								}
+							)
+		flash("Welcome {}, to {}.".format(user["firstName"], event["title"]))
+		
+		
+	#Create page
+	eventPage = Page(event["title"] + " Sign-In", "<h3>Please sign-in using your UCSD email.</h3>")
+	
+	form = Form(event["title"] + " Sign-In", "eventSignIn", "Submit")
+	form.setEventUrl(event["url"])
+	form.addInput("UCSD Email","text" , "ucsdEmail", autofocus="autofocus")
+	
+	eventPage.addForm(form)
+		
+	return render_template('form.html', page=eventPage)
+
+#Helper function that updates user status for that event, and updates the event list
+#for rsvps, canceled, waitlists, and participants.
+def statusUpdate(eventUrl, eventList, newStatus):
+	db = get_db()
+	
+	eventsCol = db.events
+	event = eventsCol.find_one({"url":eventUrl})
+	
+	usersCol = db.users
+	usersCol.update_one(
+						{
+							"ucsdEmail": session["ucsdEmail"],
+							"events.url": eventUrl
+						},
+						{"$set": {
+									"events.$.status": newStatus
+								}
+						}
+						)
+	userFromDb = usersCol.find_one({"ucsdEmail": session["ucsdEmail"]})
+						
+	user = {
+				"firstName": userFromDb["firstName"],
+				"lastName": userFromDb["lastName"],
+				"ucsdEmail": userFromDb["ucsdEmail"],
+				"ieeeNumber": userFromDb["ieeeNumber"],
+				"datetime": datetime.utcnow()
+	}
+	
+	eventsCol.update_one(
+							{"url":eventUrl},
+							{"$push": {
+										eventList: user
+									}
+							}
+						)
+	
+		
+def cardSignIn(eventUrl):
 	db = get_db()
 	eventsCol = db.events
 	

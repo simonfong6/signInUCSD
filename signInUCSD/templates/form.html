@@ -1,10 +1,12 @@
 {% extends "layout.html" %}
 {% block body %}
+<!-- Requires a Page object -->
 <h2>{{page.title}}</h2>
   {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
   <p>{{page.about|safe}}</p>
-   
+  
   {% for form in page.forms %}
+      <!-- Handles different types of endpoints for forms. -->
 	  {% if form.eventUrl %}
 	  	{% set endpoint = url_for(form.endpoint, eventUrl=form.eventUrl) %}
 	  {% elif redirect_login %}
@@ -14,24 +16,29 @@
 	  {% endif %}
 	  <form action="{{ endpoint }}" method=post>
 		<dl>
+		  <!-- Creates each form input. -->
 		  {% for input in form.inputs %}
+		  	<!-- Text boxes -->
 		  	{% if input.type == "text" or input.type == "password" %}
 		  		<dt>{{input.title}}<span class=required>*</span>
 		  		<dd><input type={{input.type}} name={{input.name}} placeholder="{{input.placeholder}}" 
 		  		required {{input.autofocus}}>
+		  	<!-- Radio buttons -->
 		  	{% elif input.type == "radio" %}
 		  		<dt>{{input.categoryTitle}}<span class=required>*</span>
 		  		{% for radio in input.radios %}
-		  			<dd><input type=radio name={{input.category}} value={{radio.value}} required>{{radio.title}}
+		  			<dd><input type=radio name={{input.category}} value={{radio.value}} required> {{radio.title}}
 		  		{% endfor %}
 		  	{% endif %}
 		  {% endfor %}
 		  <br>
 		  <br>
-		  <dd><input class=button type=submit value={{form.submit}}>
+		  <dd><input class=button type=submit value="{{form.submit}}">
 		</dl>
 	  </form>
   {% endfor %}
+  
+  <!-- Register button that only appears on Login page -->
   {% if page.title == "Login" %}
   	If you do not have an account already, please register using the link below.
   	<a href="{{ url_for('register') }}"><button class=button type="button">Register</button></a>
