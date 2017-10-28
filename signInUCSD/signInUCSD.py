@@ -444,16 +444,47 @@ def eventSignIn(eventUrl):
 	eventsCol = db.events
 	event = eventsCol.find_one({"url":eventUrl})
 	
+	
 	#Event does not exist yet
 	if(not event):
 		flash("Event does not exist, you can create one here.")
 		return redirect(url_for('create_event'))
 		
 	if request.method == 'POST':
-		ucsdEmail = request.form["ucsdEmail"]
+		SALT = "$2b$12$voW9oQb/V53wOs9.YH3br."
+		ucsdId = request.form["ucsdId"]
+		ucsdIdHash = bcrypt.hashpw(ucsdId.encode('utf8'), SALT)
 		
 		usersCol = db.users
 		
+		userFromDb = usersCol.find_one({'ucsdId': ucsdIdHash})
+		
+		if (userFromDb is None):
+			return redirect(url_for('projectSpaceRegistration', ucsdIdHash=ucsdIdHash))
+		
+		
+		eventFromDb = eventsCol.find_one({'url':eventUrl})
+					
+		user = {
+					"firstName": userFromDb["firstName"],
+					"lastName": userFromDb["lastName"],
+					"ucsdEmail": userFromDb["ucsdEmail"],
+					"ieeeNumber": userFromDb["ieeeNumber"],
+					"datetime": datetime.utcnow()
+		}
+	
+		eventsCol.update_one(
+								{"url": eventUrl}, 
+								{
+									'$inc': {"participantCount": 1},
+									"$push": {
+										"signins": user
+									}
+								}
+							)
+							
+		flash("{}++ \n You are number {}!".format(user['firstName'],int(eventFromDb['participantCount'])+1))
+		'''
 		usersCol.update_one(
 							{
 								"ucsdEmail": ucsdEmail,
@@ -465,40 +496,135 @@ def eventSignIn(eventUrl):
 										}
 							}
 						)
+		
 							
-		
-		userFromDb = usersCol.find_one({"ucsdEmail": session["ucsdEmail"]})
+		try:
+			userFromDb = usersCol.find_one({"ucsdEmail": session["ucsdEmail"]})
 						
-		user = {
-					"firstName": userFromDb["firstName"],
-					"lastName": userFromDb["lastName"],
-					"ucsdEmail": userFromDb["ucsdEmail"],
-					"ieeeNumber": userFromDb["ieeeNumber"],
-					"datetime": datetime.utcnow()
-		}
+			user = {
+						"firstName": userFromDb["firstName"],
+						"lastName": userFromDb["lastName"],
+						"ucsdEmail": userFromDb["ucsdEmail"],
+						"ieeeNumber": userFromDb["ieeeNumber"],
+						"datetime": datetime.utcnow()
+			}
 		
-		eventsCol.update_one(
-								{"url": eventUrl}, 
-								{
-									'$inc': {"participantCount": 1},
-									"$push": {
-										"signins": user
+			eventsCol.update_one(
+									{"url": eventUrl}, 
+									{
+										'$inc': {"participantCount": 1},
+										"$push": {
+											"signins": user
+										}
 									}
-								}
-							)
-		flash("Welcome {}, to {}.".format(user["firstName"], event["title"]))
-		
+								)
+			flash("Welcome {}, to {}.".format(user["firstName"], event["title"]))
+		except (KeyError):
+			flash("Unsuccesful sign-in")
+		'''
 		
 	#Create page
-	eventPage = Page(event["title"] + " Sign-In", "<h3>Please sign-in using your UCSD email.</h3>")
+	eventPage = Page(event["title"] + " Sign-In", "<h3>Please sign-in by swiping your UCSD ID card.</h3>")
 	
 	form = Form(event["title"] + " Sign-In", "eventSignIn", "Submit")
 	form.setEventUrl(event["url"])
-	form.addInput("UCSD Email","text" , "ucsdEmail", autofocus="autofocus")
+	form.addInput("UCSD ID Card","text" , "ucsdId", autofocus="autofocus", placeholder="UCSD ID Card..." )
 	
 	eventPage.addForm(form)
 		
 	return render_template('form.html', page=eventPage)
+	
+@app.route('/register/projectspace', methods=['GET','POST'])
+def projectSpaceRegistration():
+	ucsdIdHash = request.args.get('ucsdIdHash').decode('utf8')
+	print(ucsdIdHash)
+	"""Registers a user to the database."""
+	
+	registerPage = Page("Register", "")
+	
+	form = Form("Register", "projectSpaceRegistration", "Register")
+	
+	form.addTextInput("First Name", "firstName", placeholder="Your first name...")
+	form.addTextInput("Last Name", "lastName", placeholder="Your last name...")
+	form.addTextInput("UCSD Email", "ucsdEmail", placeholder="Your UCSD email...")
+	form.addInput("Password", "password", "password", placeholder="Your password...")
+	form.addInput("Confirm Password", "password", "confirmPassword", placeholder="Your password again...")
+	form.addTextInput("IEEE Member Number (Enter '0' if you don't have one.):", "ieeeNumber", placeholder="Your IEEE number...")
+	
+	majors = RadioSet("Major", "major")
+	majors.addRadio("Electrical Engineering", "EE")
+	majors.addRadio("Computer Engineering", "CE")
+	majors.addRadio("Computer Science", "CS")
+	majors.addRadio("Mechanical Engineering", "ME")
+	
+	form.addRadios(majors)
+	
+	studentType = RadioSet("Student Type", "studentType")
+	studentType.addRadio("Non-Transfer (Entered as Freshman)", "nonTransfer")
+	studentType.addRadio("Transfer", "transfer")
+	studentType.addRadio("Graduate", "graduate")
+	
+	form.addRadios(studentType)
+	
+	years = RadioSet("Years", "years")
+	years.addRadio("1st Year", "1")
+	years.addRadio("2nd Year", "2")
+	years.addRadio("3rd Year", "3")
+	years.addRadio("4th Year", "4")
+	years.addRadio("5th Year", "5")
+	years.addRadio("6th Year", "6")
+	
+	form.addRadios(years)
+	
+	staffMember = RadioSet("Are you currently an IEEE Staff Member?", "staffMember")
+	staffMember.addRadio("Yes", "yes")
+	staffMember.addRadio("No", "no")
+	
+	form.addRadios(staffMember)
+	
+	registerPage.addForm(form)
+	
+	error = None
+	if request.method == 'POST':
+		db = get_db()
+		userCol = db.users	
+		userFromDb = userCol.find_one({"ucsdEmail" : request.form["ucsdEmail"]})
+		
+		if(userFromDb):
+			flash("You already registered {}! Please continue to sign-in".format(userFromDb["firstName"]))
+			return redirect('/events/projectspace1718/signin')
+		else:
+			
+			passwordHash = None	
+			if(request.form["password"] == request.form["confirmPassword"]):
+				passwordHash = hashNum(request.form["password"])
+			else:
+				error="Passwords do not match."
+				return render_template('form.html', error=error, page=registerPage)
+		
+			newUser = {
+						"firstName" : request.form["firstName"],
+						"lastName" : request.form["lastName"],
+						"ucsdEmail" : request.form["ucsdEmail"],
+						"password" : passwordHash,
+						'ucsdId' : ucsdIdHash,
+						"admin" : False,
+						"ieeeNumber" : request.form["ieeeNumber"],
+						"major" : request.form["major"],
+						"studentType" : request.form["studentType"],
+						"years" : request.form["years"],
+						"access" : True,
+						"events" : []
+			}
+		
+			userCol.insert_one(newUser)
+		
+			flash('You have been registered. Please sign-in')
+			return redirect('/events/projectspace1718/signin')
+	
+	return render_template('psForm.html', error=error, page=registerPage, ucsdIdHash=ucsdIdHash)
+	
+	
 
 #Helper function that updates user status for that event, and updates the event list
 #for rsvps, canceled, waitlists, and participants.
