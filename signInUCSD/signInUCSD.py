@@ -528,7 +528,7 @@ def eventSignIn(eventUrl):
 	
 	form = Form(event["title"] + " Sign-In", "eventSignIn", "Submit")
 	form.setEventUrl(event["url"])
-	form.addInput("UCSD ID Card","text" , "ucsdId", autofocus="autofocus", placeholder="UCSD ID Card..." )
+	form.addInput("UCSD ID Card","password" , "ucsdId", autofocus="autofocus", placeholder="UCSD ID Card..." )
 	
 	eventPage.addForm(form)
 		

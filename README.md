@@ -295,3 +295,4 @@ If you have trouble accessing the website and you think everything went fine mak
 [Removing all PIP packages](https://stackoverflow.com/questions/11248073/what-is-the-easiest-way-to-remove-all-packages-installed-by-pip)   
 [SSL Certificates](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-16-04)  
 [Favicon Generator](https://realfavicongenerator.net/)  
+[Pie Icon](https://thenounproject.com/search/?q=simon&i=195119)  
