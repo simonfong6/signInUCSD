@@ -222,11 +222,65 @@ IMPORTANT NOTES:
 ```
 3.  Testing your new certifcates by visiting their corresponding URL's and looking for the little green lock indicating a secure connection.
 
-4. Verifying Certbot Auto-Renewal
+4. Check that your Nginx configuration files have changed.
+Before the certification, it looked like this:
+```
+server {
+    listen 80;
+
+    server_name *.mothakes.com mothakes.com;
+
+    root /var/www/html;
+
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+After it looks like this:
+```
+server {
+    listen 80;
+
+    server_name *.mothakes.com mothakes.com;
+
+    root /var/www/html;
+
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    listen 443 ssl; # managed by Certbot
+ssl_certificate /etc/letsencrypt/live/www.mothakes.com/fullchain.pem; # managed by Certbot
+ssl_certificate_key /etc/letsencrypt/live/www.mothakes.com/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+
+
+    if ($scheme != "https") {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    # Redirect non-https traffic to https
+    # if ($scheme != "https") {
+    #     return 301 https://$host$request_uri;
+    # } # managed by Certbot
+
+}
+```
+
+5. Verifying Certbot Auto-Renewal
 ```
 sudo certbot renew --dry-run
 ```
-This should run with no errors.
+This should run with no errors. This important because these certificates are only valid for 90 days and thus must be renewed periodically. Luckily, certbot has automated this process.
 
 ### Solutions to Common Problems
 If you have trouble accessing the website and you think everything went fine make sure the following is true:
