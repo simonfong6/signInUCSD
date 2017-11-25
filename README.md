@@ -4,13 +4,13 @@ Simple sign-in system using UCSD ID cards. Allows users to sign-up by filling ou
 ## Deploying on Ubuntu 16.04 EC2 on AWS
 Instructions on how to use Nginx to deploy multiple static websites and how to use it as a reverse proxy for a Flask application. I am simply reiterating all the information I have learned from the resources available below, but I will be only including the steps that I used and needed.
 
-### Ngninx
+### Nginx
 Installing Nginx by using the package manager.
 ```
 sudo apt-get install nginx
 ```
 
-I will list some commands that you can use to control Ngninx once you have it installed.  
+I will list some commands that you can use to control Nginx once you have it installed.  
 
 This will restart Nginx which is useful when you are changing the configuraiton files.
 ```
@@ -96,7 +96,61 @@ This is my static website.
 </html>
 ```
 
-7. Visit your domain name and you should see your website. In my case, go to [www.mothakes.com]()
+7. Visit your domain name and you should see your website. In my case, go to [www.mothakes.com](https://www.mothakes.com)
+
+### Using Nginx as Reverse Proxy for Flask Applications
+1. Start your flask application. In this case, my signInUCSD application which I run by issuing the following command in the same directory as the file.
+```
+python signInUCSD.py
+```
+This will start the program and it will listen on port 5000. You can test this by allowing Inbound Traffic on port 5000 and going to IP address of your server on port 5000. You should see your website files appearing.
+
+2. Remove the default server block configuration.
+```
+sudo rm /etc/nginx/sites-enabled/default
+```
+Note: All the actual configuration files will be stored in ```/etc/nginx/sites-available/```. When you actually want to use them, you symbolically link the files in ```sites-availble``` to ```/etc/nginx/sites-enabled```. In step 1, we don't actually delete the ```default``` file, but we delete the symbolic link to it. It still exists in ```sites-availble```.
+
+3. Create a new configuration file.
+```
+sudo vim /etc/nginx/sites-enabled/flask
+```
+In this example, we call the file ```flask```, but you can call it anything you want.
+
+4. In the file, create a server block by entering in the following.
+```
+server {
+    listen 80;
+    listen [::]:80;
+
+    server_name ieee.mothakes.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+```
+I will briefly explain the purpose of each line.
+* ```server { }``` specifies a server block detailing certain setttings.
+* ```listen 80;``` specifies which port this block will be listening on. Port 80 is the default port that web browsers use to access websites. This is the ```http``` portion of the url. This is different than if it is ```https``` which is port 443.
+* ```server_name ieee.mothakes.com;``` specifies which domain names this block applies to. This specific block applies to ```ieee.mothakes.com```. You may note that this overlaps with ```*.mothakes.com```. However, Nginx matches the url as closely as possible so ```ieee.mothakes.com``` will use this server block over the the one with ```*.mothakes.com```.
+* ```location / { }``` specifies what happens when this url is requested. In this case, it redirects all requests to ```http://127.0.0.1:5000```.
+* ```proxy_pass http://127.0.0.1:5000;``` specifies where to reverse proxy the requests to. This is the port and address that the Flask application is listening on.
+* ```proxy_set_header Host $host;``` the name and port of the NGINX server.
+* ```proxy_set_header X-Real-IP $remote_addr;``` the IP address of the user.
+
+5. After saving the file, you need to symbolically link it in ```sites-enabled``` for it to work.
+```
+cd /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/flask .
+```
+
+6. Restart Nginx. If all your syntax is correct, there should be no output from this command.
+```
+sudo service nginx restart
+```
+7. Visit your domain name and you should see your website. In my case, go to [ieee.mothakes.com](https://ieee.mothakes.com)
 
 ### Solutions to Common Problems
 If you have trouble accessing the website and you think everything went fine make sure the following is true:
