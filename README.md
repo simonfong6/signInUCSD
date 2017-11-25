@@ -99,6 +99,8 @@ This is my static website.
 7. Visit your domain name and you should see your website. In my case, go to [www.mothakes.com](https://www.mothakes.com)
 
 ### Using Nginx as Reverse Proxy for Flask Applications
+I will be going through how you can use Nginx as reverse proxy for a Flask application. What this essentially means is that Nginx will forward requests to a Flask application running locally and return the responses from Flask to the clients.
+
 1. Start your flask application. In this case, my signInUCSD application which I run by issuing the following command in the same directory as the file.
 ```
 python signInUCSD.py
@@ -151,6 +153,80 @@ sudo ln -s /etc/nginx/sites-available/flask .
 sudo service nginx restart
 ```
 7. Visit your domain name and you should see your website. In my case, go to [ieee.mothakes.com](https://ieee.mothakes.com)
+
+### Obtaining an SSL Certificate
+I will show all the steps required to setup your website with SSL encryption. What this basically means is that all data sent will not be sent "in the clear". This is useful when you're receiving sensitive data such as passwords and do not want anybody to be able to see it. Additonally, it will give your site the little green lock in the browser and allow ```https``` connections.
+1. Installing Certbot
+Add the repo.
+```
+sudo add-apt-repository ppa:certbot/certbot
+```
+Press ```Enter``` to accept the addition.
+```
+sudo apt-get update
+```
+Install Certbot using ```apt-get```.
+```
+sudo apt-get install python-certbot-nginx
+```
+
+2. Obtaining the certificates.
+You can add as many subdomains as you want, but wildcard domains such as ```*.mothakes.com``` will not work. You need to specify all the separate subdomains using the ```-d``` flag as we I have done below. 
+```
+sudo certbot --nginx -d www.mothakes.com -d mothakes.com -d ieee.mothakes.com
+```
+You will be prompted to choose whether or not to redirect all ```HTTP``` traffic to ```HTTPS``` with the following prompt.
+```
+Please choose whether or not to redirect HTTP traffic to HTTPS, removing HTTP access.
+-------------------------------------------------------------------------------
+1: No redirect - Make no further changes to the webserver configuration.
+2: Redirect - Make all requests redirect to secure HTTPS access. Choose this for
+new sites, or if you're confident your site works on HTTPS. You can undo this
+change by editing your web server's configuration.
+-------------------------------------------------------------------------------
+Select the appropriate number [1-2] then [enter] (press 'c' to cancel):
+```
+
+I choose option 2 which means you can only access those domains using ```HTTPS```. All ```HTTP``` traffic will be automatically redirected to ```HTTPS```.  
+
+If it's succesful you should get a similar message.
+```
+Congratulations! You have successfully enabled https://www.mothakes.com,
+https://mothakes.com, and https://ieee.mothakes.com
+
+You should test your configuration at:
+https://www.ssllabs.com/ssltest/analyze.html?d=www.mothakes.com
+https://www.ssllabs.com/ssltest/analyze.html?d=mothakes.com
+https://www.ssllabs.com/ssltest/analyze.html?d=ieee.mothakes.com
+-------------------------------------------------------------------------------
+
+IMPORTANT NOTES:
+ - Congratulations! Your certificate and chain have been saved at:
+   /etc/letsencrypt/live/www.mothakes.com/fullchain.pem
+   Your key file has been saved at:
+   /etc/letsencrypt/live/www.mothakes.com/privkey.pem
+   Your cert will expire on 2018-02-23. To obtain a new or tweaked
+   version of this certificate in the future, simply run certbot again
+   with the "certonly" option. To non-interactively renew *all* of
+   your certificates, run "certbot renew"
+ - Your account credentials have been saved in your Certbot
+   configuration directory at /etc/letsencrypt. You should make a
+   secure backup of this folder now. This configuration directory will
+   also contain certificates and private keys obtained by Certbot so
+   making regular backups of this folder is ideal.
+ - If you like Certbot, please consider supporting our work by:
+
+   Donating to ISRG / Let's Encrypt:   https://letsencrypt.org/donate
+   Donating to EFF:                    https://eff.org/donate-le
+
+```
+3.  Testing your new certifcates by visiting their corresponding URL's and looking for the little green lock indicating a secure connection.
+
+4. Verifying Certbot Auto-Renewal
+```
+sudo certbot renew --dry-run
+```
+This should run with no errors.
 
 ### Solutions to Common Problems
 If you have trouble accessing the website and you think everything went fine make sure the following is true:
