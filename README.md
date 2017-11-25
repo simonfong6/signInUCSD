@@ -61,7 +61,20 @@ I will briefly explain the purpose of each line.
 * ```server { }``` specifies a server block detailing certain setttings.  
 * ```listen 80;``` specifies which port this block will be listening on. Port 80 is the default port that web browsers use to access websites. This is the ```http``` portion of the url. This is different than if it is ```https``` which is port 443.  
 * ```server_name *.mothakes.com mothakes.com;``` specifies which domain names this block applies to. This specific block applies to ```www.mothakes.com```, ```anything.mothakes.com```, and ```mothakes.com```. The ```*``` is a wildcard allowing the subdomain to be anything.  
+* ```root /var/www/html;``` specifies where this server block will look for files for this website. Here it looks for files in ```/var/www/html```  
+* ```index index.html;``` spcifies what will the index files will be ie. which files will be served if the plain domain name is requested.  
+* ```location / { }``` specifies what happens when this url is requested. I am not sure what ```try_files``` does, but it is required I believe.  
 
+4. After saving the file, you need to symbolically link it in ```sites-enabled``` for it to work.
+```
+cd /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/static .
+```
+
+5. Restart Nginx. If all your syntax is correct, there should be no output from this command.
+```
+sudo service nginx restart
+```
 
 ### Resources
 [Proxying using Nginx, Gunicorn](https://www.youtube.com/watch?v=kDRRtPO0YPA)  
