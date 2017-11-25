@@ -96,10 +96,10 @@ This is my static website.
 </html>
 ```
 
-7. Visit your domain name and you should see your website. In my case, go to [www.mothakes.com]
+7. Visit your domain name and you should see your website. In my case, go to [www.mothakes.com]()
 
-### Frequently Problems
-If you have trouble accessing the website and you think everything went fine make sure the following is true:  
+### Solutions to Common Problems
+If you have trouble accessing the website and you think everything went fine make sure the following is true:
 * Domain is pointing correctly at your server's IP address.
 * EC2 Security Group Settings allow for Inbound Traffic for HTTP and HTTPS.
 
