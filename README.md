@@ -76,6 +76,27 @@ sudo ln -s /etc/nginx/sites-available/static .
 sudo service nginx restart
 ```
 
+6. Create an index file in ```/var/www/html```, so that it can be served.
+```
+sudo vim /var/www/html/index.html
+```
+Enter the following into the file. This is just a basic HTML file, you may change this to anything you want, but for now we'll use this to make sure our site works.
+```
+<!DOCTYPE html>
+
+<html>
+
+<head>
+</head>
+
+<body>
+This is my static website.
+</body>
+
+</html>
+
+```
+
 ### Resources
 [Proxying using Nginx, Gunicorn](https://www.youtube.com/watch?v=kDRRtPO0YPA)  
 [Reasons Proxying](https://serverfault.com/questions/331256/why-do-i-need-nginx-and-something-like-gunicorn)  
